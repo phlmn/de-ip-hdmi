@@ -8,7 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/mdlayher/raw"
-	"github.com/miekg/pcap"
+	"github.com/phlmn/pcap"
 	"io"
 	"log"
 	"net"
@@ -50,13 +50,16 @@ func main() {
 			log.Fatalf("Could not make a fifo in /tmp/hdmi-Vfifo-%s, %s", pipename, err.Error())
 		}
 
-		videowriter, err = os.OpenFile(fmt.Sprintf("/tmp/hdmi-Vfifo-%s", pipename), os.O_WRONLY, 0664)
-		if err != nil {
-			log.Fatalf("Could not open newly made fifo in /tmp/hdmi-Vfifo-%s, %s", pipename, err.Error())
-		}
+		// videowriter, err = os.OpenFile(fmt.Sprintf("/tmp/hdmi-Vfifo-%s", pipename), os.O_WRONLY, 0664)
+		// if err != nil {
+		// 	log.Fatalf("Could not open newly made fifo in /tmp/hdmi-Vfifo-%s, %s", pipename, err.Error())
+        // }
+
+        videowriter = os.Stdout
 		go DumpChanToFile(videodis, videowriter)
 	} else {
-		videowriter = os.Stdout
+        videowriter = os.Stdout
+        go DumpChanToFile(videodis, videowriter)
 	}
 
 	MULTICAST_MAC := []byte{0x01, 0x00, 0x5e, 0x02, 0x02, 0x02}
@@ -253,7 +256,7 @@ func BroadcastWakeups(ifname string, sendermac string) {
 	packet = append(macbytes[:6], packet[6:]...)
 
 	for {
-		conn, err := raw.ListenPacket(ifc, raw.ProtocolARP)
+		conn, err := raw.ListenPacket(ifc, 0x0806, nil)
 		if err != nil {
 			log.Fatalf("Unable to keep broadcasting the keepalives, %s", err.Error())
 		}
